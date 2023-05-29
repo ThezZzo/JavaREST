@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.security.auth.message.AuthException;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthenticationController {
+
 
     protected final Log logger = LogFactory.getLog(getClass());
 
@@ -41,48 +43,25 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestParam("user_name") String email,
+    public ResponseEntity<?> loginUser(@RequestParam("email") String email,
                                        @RequestParam("password") String password) {
-        Map<String, Object> responseMap = new HashMap<>();
-        try {
-            Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email
-                    , password));
-            if (auth.isAuthenticated()) {
-                logger.info("Logged In");
-                UserDetails userDetails = userDetailsService.loadUserByEmail(email);
-                String token = jwtTokenUtil.generateToken(userDetails);
-                responseMap.put("error", false);
-                responseMap.put("message", "Logged In");
-                responseMap.put("token", token);
-                return ResponseEntity.ok(responseMap);
-            } else {
-                responseMap.put("error", true);
-                responseMap.put("message", "Invalid Credentials");
-                return ResponseEntity.status(401).body(responseMap);
-            }
-        } catch (DisabledException e) {
-            e.printStackTrace();
-            responseMap.put("error", true);
-            responseMap.put("message", "User is disabled");
-            return ResponseEntity.status(500).body(responseMap);
-        } catch (BadCredentialsException e) {
-            responseMap.put("error", true);
-            responseMap.put("message", "Invalid Credentials");
-            return ResponseEntity.status(401).body(responseMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            responseMap.put("error", true);
-            responseMap.put("message", "Something went wrong");
-            return ResponseEntity.status(500).body(responseMap);
+        final Customer customer = userRepository.findByEmail(email);
+        if (customer.getPassword().equals(password)) {
+            UserDetails userDetails = userDetailsService.loadUserByEmail(email);
+            final String accessToken = jwtTokenUtil.generateToken(userDetails);
+            return ResponseEntity.ok(accessToken);
+        } else {
+            return ResponseEntity.ok("Пользователь не найден");
         }
     }
+
 
     @PostMapping("/register")
     public ResponseEntity<?> saveUser(@RequestParam("email") String email,
                                       @RequestParam("password") String password) {
         Map<String, Object> responseMap = new HashMap<>();
-        Customer newCustomer = new Customer(email,password);
-        UserDetails userDetails = userDetailsService.loadUserByEmail(newCustomer.getEmail());
+        Customer newCustomer = new Customer(email,password, "USER");
+        UserDetails userDetails = userDetailsService.createUserDetails(email, password);
         String token = jwtTokenUtil.generateToken(userDetails);
         userRepository.save(newCustomer);
         responseMap.put("error", false);

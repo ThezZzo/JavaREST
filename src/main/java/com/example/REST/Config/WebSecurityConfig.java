@@ -53,21 +53,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                .csrf()
-                .disable()
-                .authorizeRequests()
-                .antMatchers("/auth/*").permitAll()
-                .anyRequest()
-                .authenticated()
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint((request, response, authException) -> {
+        httpSecurity.csrf().disable().authorizeRequests().antMatchers("/auth/*").permitAll().anyRequest().authenticated().and().exceptionHandling().authenticationEntryPoint((request, response, authException) -> {
             Map<String, Object> responseMap = new HashMap<>();
             ObjectMapper mapper = new ObjectMapper();
             response.setStatus(401);
             responseMap.put("error", true);
-            responseMap.put("message", "Вы не авторизованы");
+            responseMap.put("message", "Unauthorized");
             response.setHeader("content-type", "application/json");
             String responseMsg = mapper.writeValueAsString(responseMap);
             response.getWriter().write(responseMsg);

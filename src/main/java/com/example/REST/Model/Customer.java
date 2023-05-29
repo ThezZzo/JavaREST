@@ -1,21 +1,18 @@
 package com.example.REST.Model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.Id;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
 public class Customer {
 
     @Id
-    @Column(name="Id", nullable = false)
+    @Column(name="Id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -25,12 +22,24 @@ public class Customer {
     @Column(nullable = false)
     private String password;
 
+    @Column
+    private String role;
 
-    public Customer(String email, String password) {
+    public Customer(String email, String password, String role) {
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
+    public String getRole() {
+        return role;
+    }
+    public Customer() {
+
+    }
+    public void setRole(String role) {
+        this.role = role;
+    }
     public String getEmail() {
         return email;
     }
